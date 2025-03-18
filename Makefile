@@ -34,3 +34,5 @@ $(RECOMP_MOD_TOOL):
 include mod.mk
 include vcpkg.mk
 include lib.mk
+
+.PHONY: mod elf mod_tool
