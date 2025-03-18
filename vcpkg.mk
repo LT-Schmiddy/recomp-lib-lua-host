@@ -1,5 +1,5 @@
 VCPKG_TOOL ?= vcpkg
-ZIG_COMPAT := zig_compat
+ZIG_COMPAT_DIR := zig_compat
 
 VCPKG_DEPS := lua sol2
 
@@ -19,15 +19,15 @@ VCPKG_LIB_DIR_WIN := $(VCPKG_INSTALLED_DIR_WIN)/$(VCPKG_TRIPLET_WIN)/lib
 VCPKG_LIB_DIR_MACOS := $(VCPKG_INSTALLED_DIR_MACOS)/$(VCPKG_TRIPLET_MACOS)/lib
 VCPKG_LIB_DIR_LINUX := $(VCPKG_INSTALLED_DIR_LINUX)/$(VCPKG_TRIPLET_LINUX)/lib
 
-vcpkg_libs_all: vcpkg_libs_windows vcpkg_libs_macos vcpkg_libs_linux
+vcpkg_libs_all: vcpkg_libs_x64_windows vcpkg_libs_x64_macos vcpkg_libs_x64_linux
 
-vcpkg_libs_windows:
-	$(VCPKG_TOOL) install --overlay-triplets=$(ZIG_COMPAT) --triplet=$(VCPKG_TRIPLET_WIN) --x-install-root=$(VCPKG_INSTALLED_DIR_WIN)
+vcpkg_libs_x64_windows:
+	$(VCPKG_TOOL) install --overlay-triplets=$(ZIG_COMPAT_DIR) --triplet=$(VCPKG_TRIPLET_WIN) --x-install-root=$(VCPKG_INSTALLED_DIR_WIN)
 
-vcpkg_libs_macos:
-	$(VCPKG_TOOL) install --overlay-triplets=$(ZIG_COMPAT) --triplet=$(VCPKG_TRIPLET_MACOS) --x-install-root=$(VCPKG_INSTALLED_DIR_MACOS)
+vcpkg_libs_x64_macos:
+	$(VCPKG_TOOL) install --overlay-triplets=$(ZIG_COMPAT_DIR) --triplet=$(VCPKG_TRIPLET_MACOS) --x-install-root=$(VCPKG_INSTALLED_DIR_MACOS)
 
-vcpkg_libs_linux:
-	$(VCPKG_TOOL) install --overlay-triplets=$(ZIG_COMPAT) --triplet=$(VCPKG_TRIPLET_LINUX) --x-install-root=$(VCPKG_INSTALLED_DIR_LINUX)
+vcpkg_libs_x64_linux:
+	$(VCPKG_TOOL) install --overlay-triplets=$(ZIG_COMPAT_DIR) --triplet=$(VCPKG_TRIPLET_LINUX) --x-install-root=$(VCPKG_INSTALLED_DIR_LINUX)
 
 .PHONY: vcpkg
