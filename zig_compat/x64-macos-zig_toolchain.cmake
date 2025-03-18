@@ -1,0 +1,7 @@
+set(ZIG_SYSTEM_NAME Generic)
+set(ZIG_SYSTEM_PROCESSOR x64)
+set(ZIG_TARGET "x86_64-macos")
+
+set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_CURRENT_LIST_DIR}/zig_toolchain_base.cmake")
+
+

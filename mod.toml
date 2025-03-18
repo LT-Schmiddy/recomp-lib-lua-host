@@ -5,7 +5,7 @@
 
 # Unique ID of this mod. Pick something long enough that it'll never be the same as any other mod.
 # The name displayed in the mod management menu is separate from this so this doesn't need to be human readable.
-id = "mm_recomp_mod_template"
+id = "mm_recomp_host_lua_lib"
 
 # Version of this mod.
 version = "1.0.0"
@@ -52,7 +52,7 @@ native_libraries = [
 elf_path = "build/mod.elf"
 
 # Output mod filename.
-mod_filename = "mm_recomp_mod_template"
+mod_filename = "mm_recomp_host_lua_lib"
 
 # Reference symbol files.
 func_reference_syms_file = "Zelda64RecompSyms/mm.us.rev1.syms.toml"
@@ -61,29 +61,29 @@ data_reference_syms_files = [ "Zelda64RecompSyms/mm.us.rev1.datasyms.toml", "Zel
 # Additional files to include in the mod.
 additional_files = [ ]
 
-[[manifest.config_options]]
-id = "enum_option"
-name = "Enum Option"
-description = "Test enum config option"
-type = "Enum"
-options = [ "First", "Second" ]
-default = "First"
+# [[manifest.config_options]]
+# id = "enum_option"
+# name = "Enum Option"
+# description = "Test enum config option"
+# type = "Enum"
+# options = [ "First", "Second" ]
+# default = "First"
 
-[[manifest.config_options]]
-id = "number_option"
-name = "Number Option"
-description = "Test number config option."
-type = "Number"
-min = 0
-max = 10
-step = 0.1
-precision = 1
-percent = false
-default = 1
+# [[manifest.config_options]]
+# id = "number_option"
+# name = "Number Option"
+# description = "Test number config option."
+# type = "Number"
+# min = 0
+# max = 10
+# step = 0.1
+# precision = 1
+# percent = false
+# default = 1
 
-[[manifest.config_options]]
-id = "string_option"
-name = "String Option"
-description = "Test string config option."
-type = "String"
-default = "Lorem Ipsum"
+# [[manifest.config_options]]
+# id = "string_option"
+# name = "String Option"
+# description = "Test string config option."
+# type = "String"
+# default = "Lorem Ipsum"
