@@ -1,33 +1,44 @@
 VCPKG_TOOL ?= vcpkg
 ZIG_COMPAT_DIR := zig_compat
 
-VCPKG_DEPS := lua sol2
+VCPKG_LINKS := lua
 
-VCPKG_TRIPLET_WIN ?= x64-windows-static-zig
-VCPKG_TRIPLET_MACOS ?= x64-macos-zig
-VCPKG_TRIPLET_LINUX ?= x64-linux-zig
+define vcpkg_link_paths
+$(call vcpkg_get_lib_dir,$(1))
+endef
 
-VCPKG_INSTALLED_DIR_WIN := ./vcpkg_installed/$(VCPKG_TRIPLET_WIN)
-VCPKG_INSTALLED_DIR_MACOS := ./vcpkg_installed/$(VCPKG_TRIPLET_MACOS)
-VCPKG_INSTALLED_DIR_LINUX := ./vcpkg_installed/$(VCPKG_TRIPLET_LINUX)
+VCPKG_TRIPLET_WIN ?=x64-windows-static-zig
+VCPKG_TRIPLET_MACOS ?=x64-macos-zig
+VCPKG_TRIPLET_LINUX ?=x64-linux-zig
 
-VCPKG_INCLUDE_DIR_WIN := $(VCPKG_INSTALLED_DIR_WIN)/$(VCPKG_TRIPLET_WIN)/include
-VCPKG_INCLUDE_DIR_MACOS := $(VCPKG_INSTALLED_DIR_MACOS)/$(VCPKG_TRIPLET_MACOS)/include
-VCPKG_INCLUDE_DIR_LINUX:= $(VCPKG_INSTALLED_DIR_LINUX)/$(VCPKG_TRIPLET_LINUX)/include
+define vcpkg_get_installed_dir
+./vcpkg_installed/$(1)
+endef
 
-VCPKG_LIB_DIR_WIN := $(VCPKG_INSTALLED_DIR_WIN)/$(VCPKG_TRIPLET_WIN)/lib
-VCPKG_LIB_DIR_MACOS := $(VCPKG_INSTALLED_DIR_MACOS)/$(VCPKG_TRIPLET_MACOS)/lib
-VCPKG_LIB_DIR_LINUX := $(VCPKG_INSTALLED_DIR_LINUX)/$(VCPKG_TRIPLET_LINUX)/lib
+define vcpkg_get_include_dir
+$(call vcpkg_get_installed_dir,$(1))/$(1)/include
+endef
 
-vcpkg_libs_all: vcpkg_libs_x64_windows vcpkg_libs_x64_macos vcpkg_libs_x64_linux
+define vcpkg_get_lib_dir
+$(call vcpkg_get_installed_dir,$(1))/$(1)/lib
+endef
 
-vcpkg_libs_x64_windows:
-	$(VCPKG_TOOL) install --overlay-triplets=$(ZIG_COMPAT_DIR) --triplet=$(VCPKG_TRIPLET_WIN) --x-install-root=$(VCPKG_INSTALLED_DIR_WIN)
+define vcpkg_install_lib
+	$(VCPKG_TOOL) install --overlay-triplets=$(ZIG_COMPAT_DIR) --triplet=$(1) --x-install-root=$(call vcpkg_get_installed_dir,$(1))
+endef
 
-vcpkg_libs_x64_macos:
-	$(VCPKG_TOOL) install --overlay-triplets=$(ZIG_COMPAT_DIR) --triplet=$(VCPKG_TRIPLET_MACOS) --x-install-root=$(VCPKG_INSTALLED_DIR_MACOS)
+vcpkg_all: vcpkg_x64_windows vcpkg_x64_macos vcpkg_x64_linux
 
-vcpkg_libs_x64_linux:
-	$(VCPKG_TOOL) install --overlay-triplets=$(ZIG_COMPAT_DIR) --triplet=$(VCPKG_TRIPLET_LINUX) --x-install-root=$(VCPKG_INSTALLED_DIR_LINUX)
+vcpkg_x64_windows: $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_WIN))
+$(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_WIN)):
+	$(call vcpkg_install_lib,$(VCPKG_TRIPLET_WIN))
 
-.PHONY: vcpkg
+vcpkg_x64_macos: $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_MACOS))
+$(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_MACOS)):
+	$(call vcpkg_install_lib,$(VCPKG_TRIPLET_MACOS))
+
+vcpkg_x64_linux: $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_LINUX))
+$(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_LINUX)):
+	$(call vcpkg_install_lib,$(VCPKG_TRIPLET_LINUX))
+
+.PHONY: vcpkg vcpkg_all vcpkg_x64_windows vcpkg_x64_macos vcpkg_x64_linux
