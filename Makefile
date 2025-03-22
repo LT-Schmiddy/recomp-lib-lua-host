@@ -1,6 +1,12 @@
-BUILD_DIR := build
 
-# Compilers:
+# ========== CONFIGURATION ==========
+MOD_TOML ?= ./mod.toml
+BUILD_DIR ?= build
+LIB_NAME ?= lua_host
+LIB_LINKS ?= -llua
+ASSETS_EXTRACTED_DIR ?= assets_extracted
+
+# ========== COMPILATION TOOLS ==========
 MOD_CC ?= clang
 MOD_LD ?= ld.lld
 
@@ -9,28 +15,29 @@ ZIG_CXX ?= zig c++
 ZIG_LD ?= zig ld.lld
 ZIG_AR ?= zig ar
 
-# Recomp Tools:
-MOD_FILENAME := mm_recomp_host_lua_lib
-MOD_TOML ?= ./mod.toml
-MOD_ELF  := $(BUILD_DIR)/mod.elf
-LIB_FILE  := $(BUILD_DIR)/lua_host
-BUILD_MOD_DIR := $(BUILD_DIR)/src/mod
-BUILD_LIB_DIR := $(BUILD_DIR)/src/lib
-ASSETS_EXTRACTED_DIR := assets_extracted
-
-# Python call info:
+# ========== INIT PYTHON INTEGRATION ==========
 ifeq ($(OS),Windows_NT)
 PYTHON_EXEC ?= python
 else
 PYTHON_EXEC ?= python3
 endif
 
-PYTHON_FUNC_MODULE ?= make_python_functions
-define python_func
-	$(PYTHON_EXEC) -c "import $(PYTHON_FUNC_MODULE); $(PYTHON_FUNC_MODULE).$(1)($(2))"
+PYTHON_FUNC_MODULE := make_python_functions
+define call_python_func
+	$(PYTHON_EXEC) -c "import $(PYTHON_FUNC_MODULE); $(PYTHON_FUNC_MODULE).ModInfo(\"$(MOD_TOML)\", \"$(BUILD_DIR)\").$(1)($(2))"
 endef
 
-# Targets:
+define get_python_func
+$(shell $(PYTHON_EXEC) -c "import $(PYTHON_FUNC_MODULE); $(PYTHON_FUNC_MODULE).ModInfo(\"$(MOD_TOML)\", \"$(BUILD_DIR)\").$(1)($(2))")
+endef
+
+define get_python_val
+$(shell $(PYTHON_EXEC) -c "import $(PYTHON_FUNC_MODULE); print($(PYTHON_FUNC_MODULE).ModInfo(\"$(MOD_TOML)\", \"$(BUILD_DIR)\").$(1))")
+endef
+
+# ========== INITIALIZE BUILD DIRS AND TARGETS ==========
+BUILD_MOD_DIR := $(BUILD_DIR)/src/mod
+BUILD_LIB_DIR := $(BUILD_DIR)/src/lib
 all: $(BUILD_DIR) $(BUILD_LIB_DIR) $(BUILD_MOD_DIR) lib_all mod
 
 $(BUILD_DIR) $(BUILD_LIB_DIR) $(BUILD_MOD_DIR):
@@ -40,8 +47,12 @@ else
 	mkdir -p $@
 endif
 
-# include mod.mk
-# ======================== BUILD MOD CONFIG ========================
+# ========== BUILD MOD CONFIG ==========
+MOD_FILE := $(call get_python_func,get_mod_file,)
+$(info MOD_FILE=$(MOD_FILE))
+MOD_ELF  := $(call get_python_func,get_mod_elf,)
+$(info MOD_ELF=$(MOD_ELF))
+
 ifeq ($(OS),Windows_NT)
 RECOMP_MOD_TOOL ?= ./N64Recomp/build/RecompModTool.exe
 else
@@ -68,7 +79,7 @@ $(MOD_ELF): $(MOD_C_OBJS) $(MOD_LDSCRIPT) | $(BUILD_DIR) $(ASSETS_EXTRACTED_DIR)
 $(MOD_C_OBJS): $(BUILD_DIR)/%.o : %.c | $(BUILD_DIR) $(BUILD_MOD_DIR) $(ASSETS_EXTRACTED_DIR)
 	$(MOD_CC) $(MOD_CFLAGS) $(MOD_CPPFLAGS) $< -MMD -MF $(@:.o=.d) -c -o $@
 
-$(MOD_FILENAME): $(RECOMP_MOD_TOOL) $(MOD_ELF) elf
+$(MOD_FILE): $(RECOMP_MOD_TOOL) $(MOD_ELF) elf
 	$(RECOMP_MOD_TOOL) $(MOD_TOML) $(BUILD_DIR)
 
 $(RECOMP_MOD_TOOL):
@@ -76,22 +87,18 @@ $(RECOMP_MOD_TOOL):
 	cmake --build ./N64Recomp/build
 
 $(ASSETS_EXTRACTED_DIR):
-	$(call python_func,create_asset_archive,\"$(ASSETS_EXTRACTED_DIR)\")
+	$(call call_python_func,create_asset_archive,\"$(ASSETS_EXTRACTED_DIR)\")
 
-mod: $(MOD_FILENAME) 
+mod: $(MOD_FILE) 
 elf: $(MOD_ELF)
 mod_tool: $(RECOMP_MOD_TOOL)
 
 -include $(MOD_C_DEPS)
 
-# .PHONY: mod elf mod_tool
-
-# include vcpkg.mk
-# ======================== BUILD VCPKG CONFIG ========================
+# ========== BUILD VCPKG CONFIG ==========
 VCPKG_TOOL ?= vcpkg
 ZIG_COMPAT_DIR := zig_compat
 ZIG_SHIMS_DIR := $(ZIG_COMPAT_DIR)/shims
-VCPKG_LINKS := lua
 
 define vcpkg_link_paths
 $(call vcpkg_get_lib_dir,$(1))
@@ -119,7 +126,7 @@ endef
 
 zig_shims: $(ZIG_SHIMS_DIR)
 $(ZIG_SHIMS_DIR):
-	$(call python_func,build_zig_shims,)
+	$(call call_python_func,build_zig_shims,)
 
 	
 vcpkg_all: vcpkg_x64_windows vcpkg_x64_macos vcpkg_x64_linux
@@ -136,12 +143,13 @@ vcpkg_x64_linux: $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_LINUX))
 $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_LINUX)): $(ZIG_SHIMS_DIR)
 	$(call vcpkg_install_lib,$(VCPKG_TRIPLET_LINUX))
 
-# .PHONY: vcpkg_all vcpkg_x64_windows vcpkg_x64_macos vcpkg_x64_linux zig_shims
 
-# ======================== BUILD LIB CONFIG ========================
+# ========== BUILD LIB CONFIG ==========
+LIB_FILE  := $(BUILD_DIR)/$(LIB_NAME)
+
 LIB_CFLAGS := -O2
 LIB_CPPFLAGS := -I include/lib 
-LIB_LDFLAGS  := -llua
+LIB_LDFLAGS  := $(LIB_LINKS)
 
 LIB_SRCS := $(wildcard src/lib/*.cpp) $(wildcard src/lib/*.c)
 
@@ -165,8 +173,8 @@ lib_x86_64-macos: $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_MACOS)) $(BUILD
 lib_x86_64-linux: $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_LINUX)) $(BUILD_DIR) $(BUILD_LIB_DIR)
 	$(call compile_lib,x86_64-linux,$(VCPKG_TRIPLET_LINUX),,$(LIB_FILE).so)
 
-# .PHONY: lib_x86_64-windows lib_x86_64-macos lib_x86_64-linux
 
+# =========== MISC ==========
 
 clean:
 	rm -rf $(BUILD_DIR)
