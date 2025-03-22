@@ -2,7 +2,8 @@ import subprocess, os, shutil, json, zipfile
 from pathlib import Path
 import make_python_functions as bm
 
-package_dir = bm.project_root.joinpath("thunderstore_package")
+info = bm.ModInfo("./mod.toml", "build")
+package_dir = info.project_root.joinpath("thunderstore_package")
 
 def get_git_url() -> str:
     result = subprocess.run(
@@ -48,16 +49,16 @@ def update_manifest(path: Path):
     print(f"Updating manifest at '{path}'...")
     current_manifest: dict[str, str] = json.loads(path.read_text());
     current_manifest.update({
-        "name":  bm.mod_data["manifest"]["id"],
-        "version_number":  bm.mod_data["manifest"]["version"],
-        "description":  bm.mod_data["manifest"]["short_description"],
+        "name":  info.mod_data["manifest"]["id"],
+        "version_number":  info.mod_data["manifest"]["version"],
+        "description":  info.mod_data["manifest"]["short_description"],
     })
     path.write_text(json.dumps(current_manifest, indent=4))
 
 
 def create_readme(path: Path):
     print(f"Creating readme at from description at '{path}'...")
-    readme_str = f"# {bm.mod_data['manifest']['display_name']}\n\n{bm.mod_data['manifest']['description']}"
+    readme_str = f"# {info.mod_data['manifest']['display_name']}\n\n{info.mod_data['manifest']['description']}"
     path.write_text(readme_str)
 
 
@@ -90,7 +91,7 @@ def create_archive(package_dir: Path, dst_path: Path):
     new_zip.close()
 
 def create_package():
-    bm.run_build()
+    info.run_build()
     
     fully_collected = True
     
@@ -109,14 +110,14 @@ def create_package():
     
     icon_file = package_dir.joinpath("icon.png")
     if not icon_file.is_file():
-        fully_collected = fully_collected and copy_icon(bm.project_root.joinpath("thumb.png"), icon_file)
+        fully_collected = fully_collected and copy_icon(info.project_root.joinpath("thumb.png"), icon_file)
     
-    mod_file = package_dir.joinpath(bm.build_nrm_file.name)
-    fully_collected = fully_collected and copy_mod(bm.build_nrm_file, mod_file)
+    mod_file = package_dir.joinpath(info.build_nrm_file.name)
+    fully_collected = fully_collected and copy_mod(info.build_nrm_file, mod_file)
     
     if fully_collected:
         print("Fully collected. Zipping mod package.")
-        create_archive(package_dir, bm.project_root.joinpath(f"{bm.mod_data['inputs']['mod_filename']}.thunderstore.zip"))
+        create_archive(package_dir, info.project_root.joinpath(f"{info.mod_data['inputs']['mod_filename']}.thunderstore.zip"))
     else:
         print("Files are missing.")
     
