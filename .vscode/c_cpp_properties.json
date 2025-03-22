@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/include/mod/",
                 "${workspaceFolder}/include/mod/dummy_headers",
-                "${workspaceFolder}/include/lib/",
+                "${workspaceFolder}/include/lib",
                 "${workspaceFolder}/vcpkg_installed/x64-windows-static-zig/x64-windows-static-zig/include",
                 "${workspaceFolder}/mm-decomp/include",
                 "${workspaceFolder}/mm-decomp/src",
