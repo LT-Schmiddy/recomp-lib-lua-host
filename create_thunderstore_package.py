@@ -1,15 +1,13 @@
 import subprocess, os, shutil, json, zipfile
 from pathlib import Path
-import build_n64recomp_tools as bnt
-import build_mod as bm
+import make_python_functions as bm
 
 package_dir = bm.project_root.joinpath("thunderstore_package")
 
-deps = bnt.deps = bnt.deps
 def get_git_url() -> str:
     result = subprocess.run(
         [
-            deps["git"],
+            shutil.which("git"),
             "config", 
             "--get", 
             "remote.origin.url"

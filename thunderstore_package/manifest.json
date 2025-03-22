@@ -1,0 +1,7 @@
+{
+    "name": "mm_recomp_host_lua_lib",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/LT-Schmiddy/recomp-lib-lua-host.git",
+    "description": "Always perform a quickspin when swinging your sword.",
+    "dependencies": []
+}
