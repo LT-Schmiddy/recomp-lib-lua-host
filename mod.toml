@@ -42,7 +42,7 @@ dependencies = [
 # Native libraries (e.g. DLLs) and the functions they export.
 native_libraries = [
 # Example native library:
-#    { name = "my_native_library", funcs = ["my_native_library_function"] }
+   { name = "lua_host", funcs = ["test_func"] }
 ]
 
 # Inputs to the mod tool.

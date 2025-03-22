@@ -8,6 +8,7 @@ ASSETS_EXTRACTED_DIR ?= assets_extracted
 
 # ========== COMPILATION TOOLS ==========
 MOD_CC ?= clang
+MOD_CXX ?= clang
 MOD_LD ?= ld.lld
 
 ZIG_CC ?= zig cc
@@ -24,21 +25,24 @@ endif
 
 PYTHON_FUNC_MODULE := make_python_functions
 define call_python_func
-	$(PYTHON_EXEC) -c "import $(PYTHON_FUNC_MODULE); $(PYTHON_FUNC_MODULE).ModInfo(\"$(MOD_TOML)\", \"$(BUILD_DIR)\").$(1)($(2))"
+	$(PYTHON_EXEC) -c "import $(PYTHON_FUNC_MODULE); $(PYTHON_FUNC_MODULE).ModInfo(\"$(MOD_TOML)\", \"$(BUILD_DIR)\", \"$(LIB_NAME)\").$(1)($(2))"
 endef
 
 define get_python_func
-$(shell $(PYTHON_EXEC) -c "import $(PYTHON_FUNC_MODULE); $(PYTHON_FUNC_MODULE).ModInfo(\"$(MOD_TOML)\", \"$(BUILD_DIR)\").$(1)($(2))")
+$(shell $(PYTHON_EXEC) -c "import $(PYTHON_FUNC_MODULE); $(PYTHON_FUNC_MODULE).ModInfo(\"$(MOD_TOML)\", \"$(BUILD_DIR)\", \"$(LIB_NAME)\").$(1)($(2))")
 endef
 
 define get_python_val
-$(shell $(PYTHON_EXEC) -c "import $(PYTHON_FUNC_MODULE); print($(PYTHON_FUNC_MODULE).ModInfo(\"$(MOD_TOML)\", \"$(BUILD_DIR)\").$(1))")
+$(shell $(PYTHON_EXEC) -c "import $(PYTHON_FUNC_MODULE); print($(PYTHON_FUNC_MODULE).ModInfo(\"$(MOD_TOML)\", \"$(BUILD_DIR)\", \"$(LIB_NAME)\").$(1))")
 endef
 
 # ========== INITIALIZE BUILD DIRS AND TARGETS ==========
 BUILD_MOD_DIR := $(BUILD_DIR)/src/mod
 BUILD_LIB_DIR := $(BUILD_DIR)/src/lib
-all: $(BUILD_DIR) $(BUILD_LIB_DIR) $(BUILD_MOD_DIR) lib_all mod
+all: $(BUILD_DIR) $(BUILD_LIB_DIR) $(BUILD_MOD_DIR) lib_all mod copy_to_runtime
+
+copy_to_runtime:
+	$(call call_python_func,copy_to_runtime_dir,)
 
 $(BUILD_DIR) $(BUILD_LIB_DIR) $(BUILD_MOD_DIR):
 ifeq ($(OS),Windows_NT)
@@ -148,30 +152,29 @@ $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_LINUX)): $(ZIG_SHIMS_DIR)
 LIB_FILE  := $(BUILD_DIR)/$(LIB_NAME)
 
 LIB_CFLAGS := -O2
-LIB_CPPFLAGS := -I include/lib 
+LIB_CPPFLAGS := -std=c++20 -I include/lib 
 LIB_LDFLAGS  := $(LIB_LINKS)
 
 LIB_SRCS := $(wildcard src/lib/*.cpp) $(wildcard src/lib/*.c)
 
 define compile_lib_flags
--target $(1) -L $(call vcpkg_get_lib_dir,$(2)) -I $(call vcpkg_get_include_dir,$(2))
+-target $(1) -shared -fPIC -L $(call vcpkg_get_lib_dir,$(2)) -I $(call vcpkg_get_include_dir,$(2))
 endef
 
 define compile_lib
-	$(ZIG_CXX) -shared $(LIB_LDFLAGS) $(LIB_CFLAGS) $(CXXFLAGS) $(3) -o $(4) $(LIB_SRCS) $(call compile_lib_flags,$(1),$(2))
+	$(ZIG_CXX) $(call compile_lib_flags,$(1),$(2)) $(LIB_LDFLAGS) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(3) -o $(4) $(LIB_SRCS) 
 endef
 
 lib_all: $(BUILD_DIR) $(BUILD_LIB_DIR) lib_x86_64-windows lib_x86_64-macos lib_x86_64-linux
 
 lib_x86_64-windows: $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_WIN)) $(BUILD_DIR) $(BUILD_LIB_DIR)
-	$(call compile_lib,x86_64-windows,$(VCPKG_TRIPLET_WIN),,$(LIB_FILE).dll)
-# $(ZIG_CXX) -shared -target x86_64-windows $(LIB_LDFLAGS) $(LIB_CFLAGS) $(CXXFLAGS) -o $(LIB_FILE).dll $(LIB_SRCS)
+	$(call compile_lib,x86_64-windows,$(VCPKG_TRIPLET_WIN),-s,$(LIB_FILE).dll)
 
 lib_x86_64-macos: $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_MACOS)) $(BUILD_DIR) $(BUILD_LIB_DIR)
 	$(call compile_lib,x86_64-macos,$(VCPKG_TRIPLET_MACOS),,$(LIB_FILE).dylib)
 
 lib_x86_64-linux: $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_LINUX)) $(BUILD_DIR) $(BUILD_LIB_DIR)
-	$(call compile_lib,x86_64-linux,$(VCPKG_TRIPLET_LINUX),,$(LIB_FILE).so)
+	$(call compile_lib,x86_64-linux,$(VCPKG_TRIPLET_LINUX),-ldl,$(LIB_FILE).so)
 
 
 # =========== MISC ==========
@@ -179,4 +182,4 @@ clean:
 	$(call call_python_func,run_clean,)
 
 .PHONY: all clean lib_x86_64-windows lib_x86_64-macos lib_x86_64-linux vcpkg_all vcpkg_x64_windows vcpkg_x64_macos \
-	 vcpkg_x64_linux zig_shims mod elf mod_tool
+	 vcpkg_x64_linux zig_shims mod elf mod_tool copy_to_runtime

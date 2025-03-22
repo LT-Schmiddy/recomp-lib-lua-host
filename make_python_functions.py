@@ -7,7 +7,7 @@ class ModInfo:
     mod_toml_file: Path
     mod_data: dict
     
-    def __init__(self, mod_toml_str: str, build_dir: str):
+    def __init__(self, mod_toml_str: str, build_dir: str, lib_name: str):
         self.project_root = Path(__file__).parent
         self.mod_toml_file = self.project_root.joinpath(mod_toml_str)
         
@@ -15,9 +15,20 @@ class ModInfo:
         # print(mod_data)
         self.build_dir = self.project_root.joinpath(build_dir)
         self.build_nrm_file = self.build_dir.joinpath(f"{self.mod_data['inputs']['mod_filename']}.nrm")
+        
+        self.build_dll_file = self.build_dir.joinpath(f"{lib_name}.dll")
+        self.build_pdb_file = self.build_dir.joinpath(f"{lib_name}.pdb")
+        self.build_dylib_file = self.build_dir.joinpath(f"{lib_name}.dylib")
+        self.build_so_file = self.build_dir.joinpath(f"{lib_name}.so")
 
         self.runtime_mods_dir = self.project_root.joinpath("runtime/mods")
         self.runtime_nrm_file = self.runtime_mods_dir.joinpath(f"{self.mod_data['inputs']['mod_filename']}.nrm")
+        
+        self.runtime_dll_file = self.runtime_mods_dir.joinpath(f"{lib_name}.dll")
+        self.runtime_pdb_file = self.runtime_mods_dir.joinpath(f"{lib_name}.pdb")
+        self.runtime_dylib_file = self.runtime_mods_dir.joinpath(f"{lib_name}.dylib")
+        self.runtime_so_file = self.runtime_mods_dir.joinpath(f"{lib_name}.so")
+        
         self.assets_archive_path =self.project_root.joinpath("assets_archive.zip")
 
         self.zig_shims_dir = Path(__file__).parent.joinpath("./zig_compat/shims")
@@ -76,6 +87,10 @@ class ModInfo:
         # Copying files for debugging:
         os.makedirs(self.runtime_mods_dir, exist_ok=True)
         shutil.copy(self.build_nrm_file, self.runtime_nrm_file)
+        shutil.copy(self.build_dll_file, self.runtime_dll_file)
+        shutil.copy(self.build_pdb_file, self.runtime_pdb_file)
+        shutil.copy(self.build_dylib_file, self.runtime_dylib_file)
+        shutil.copy(self.build_so_file, self.runtime_so_file)
 
     def run_clean(self):
         shutil.rmtree(self.build_dir)
