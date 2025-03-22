@@ -83,7 +83,7 @@ $(MOD_FILE): $(RECOMP_MOD_TOOL) $(MOD_ELF) elf
 	$(RECOMP_MOD_TOOL) $(MOD_TOML) $(BUILD_DIR)
 
 $(RECOMP_MOD_TOOL):
-	cmake -S ./N64Recomp -B ./N64Recomp/build -G Ninja 
+	cmake -S ./N64Recomp -B ./N64Recomp/build -G Ninja -DCMAKE_BUILD_TYPE=Release
 	cmake --build ./N64Recomp/build
 
 $(ASSETS_EXTRACTED_DIR):
@@ -175,11 +175,8 @@ lib_x86_64-linux: $(call vcpkg_get_installed_dir,$(VCPKG_TRIPLET_LINUX)) $(BUILD
 
 
 # =========== MISC ==========
-
 clean:
-	rm -rf $(BUILD_DIR)
-	rm -rf ./N64Recomp/build/
-	rm -rf ./vcpkg_installed/
+	$(call call_python_func,run_clean,)
 
 .PHONY: all clean lib_x86_64-windows lib_x86_64-macos lib_x86_64-linux vcpkg_all vcpkg_x64_windows vcpkg_x64_macos \
 	 vcpkg_x64_linux zig_shims mod elf mod_tool

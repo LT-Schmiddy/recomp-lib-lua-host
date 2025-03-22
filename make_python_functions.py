@@ -77,6 +77,12 @@ class ModInfo:
         os.makedirs(self.runtime_mods_dir, exist_ok=True)
         shutil.copy(self.build_nrm_file, self.runtime_nrm_file)
 
+    def run_clean(self):
+        shutil.rmtree(self.build_dir)
+        shutil.rmtree(self.zig_shims_dir)
+        shutil.rmtree(self.project_root.joinpath("./N64Recomp/build"))
+        shutil.rmtree(self.project_root.joinpath("./vcpkg_installed"))
+    
     def run_build(self):
         # Unzipping Archive:
         make_run = subprocess.run(
