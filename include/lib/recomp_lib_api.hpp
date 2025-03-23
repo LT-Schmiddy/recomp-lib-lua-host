@@ -7,11 +7,12 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "mod_recomp.h"
+#include <mod_recomp.h>
 
 extern "C" {
     #define RECOMP_API_VERSION 1
     #define TO_PTR(type, var) ((type*)(&rdram[(uint64_t)var - 0xFFFFFFFF80000000]))
+    #define PTR(x) int32_t
 
     #define RECOMP_DLL_C_FUNC(_f_name) RECOMP_EXPORT void _f_name(uint8_t* rdram, recomp_context* ctx)
 
